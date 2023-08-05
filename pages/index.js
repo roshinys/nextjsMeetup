@@ -1,4 +1,7 @@
+// import { Head } from "next/head";
+import Head from "next/head";
 import MeetupList from "../components/meetups/MeetupList";
+import { MongoClient } from "mongodb";
 
 // export async function getServerSideProps(context) {
 //   //   const req = context.req;
@@ -12,14 +15,11 @@ import MeetupList from "../components/meetups/MeetupList";
 // }
 
 export const getStaticProps = async () => {
-  const response = await fetch("http://localhost:3000/api/meetup", {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-    },
-  });
-  const data = await response.json();
-  const meetups = data.meetups;
+  const client = await MongoClient.connect(process.env.MONGO_URL);
+  const db = client.db();
+  const meetupsCollection = db.collection("meetups");
+  const meetups = await meetupsCollection.find().toArray();
+  client.close();
   return {
     props: {
       meetups: meetups.map((meetup) => {
@@ -32,12 +32,23 @@ export const getStaticProps = async () => {
         };
       }),
     },
-    revalidate: 1,
+    revalidate: 10,
   };
 };
 
 function HomePage(props) {
-  return <MeetupList meetups={props.meetups} />;
+  return (
+    <>
+      <Head>
+        <title>Next Meetup</title>
+        <meta
+          name="description"
+          content="Browse some starting next js project"
+        />
+      </Head>
+      <MeetupList meetups={props.meetups} />
+    </>
+  );
 }
 
 export default HomePage;

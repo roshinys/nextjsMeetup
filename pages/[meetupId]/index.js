@@ -1,27 +1,33 @@
 import MeetUpDetail from "@/components/meetups/MeetUpDetail";
 import { MongoClient, ObjectId } from "mongodb";
+import Head from "next/head";
 
 export default function MeetUpDetails({ meetupData }) {
   return (
-    <MeetUpDetail
-      id={meetupData.id}
-      title={meetupData.title}
-      image={meetupData.image}
-      address={meetupData.address}
-      description={meetupData.description}
-    />
+    <>
+      <Head>
+        <title>{meetupData.title}</title>
+        <meta name="description" content={meetupData.description} />
+      </Head>
+      <MeetUpDetail
+        id={meetupData.id}
+        title={meetupData.title}
+        image={meetupData.image}
+        address={meetupData.address}
+        description={meetupData.description}
+      />
+    </>
   );
 }
 
 export async function getStaticPaths() {
-  const response = await fetch("http://localhost:3000/api/meetupId", {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-    },
-  });
-  const data = await response.json();
-  const meetups = data.meetups;
+  const client = await MongoClient.connect(process.env.MONGO_URL);
+  const db = client.db();
+  const meetupsCollection = db.collection("meetups");
+  const meetups = await meetupsCollection
+    .find({}, { projection: { _id: 1 } })
+    .toArray();
+  client.close();
   return {
     fallback: false,
     paths: meetups.map((meetup) => {
