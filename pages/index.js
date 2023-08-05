@@ -1,46 +1,43 @@
 import MeetupList from "../components/meetups/MeetupList";
 
-const DUMMY_MEETUPS = [
-  {
-    id: "1",
-    title: "A First Meetup",
-    image:
-      "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d3/Stadtbild_M%C3%BCnchen.jpg/1280px-Stadtbild_M%C3%BCnchen.jpg",
-    address: "Some address 5, 12345 Some City",
-    description: "This is a first meetup!",
-  },
-  {
-    id: "2",
-    title: "A Second Meetup",
-    image:
-      "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d3/Stadtbild_M%C3%BCnchen.jpg/1280px-Stadtbild_M%C3%BCnchen.jpg",
-    address: "Some address 10, 12345 Some City",
-    description: "This is a second meetup!",
-  },
-];
-
-export async function getServerSideProps(context) {
-  //   const req = context.req;
-  //   const res = context.res;
-  //fetch data from an api
-  return {
-    props: {
-      meetups: DUMMY_MEETUPS,
-    },
-  };
-}
-
-// export const getStaticProps = () => {
+// export async function getServerSideProps(context) {
+//   //   const req = context.req;
+//   //   const res = context.res;
+//   //fetch data from an api
 //   return {
 //     props: {
 //       meetups: DUMMY_MEETUPS,
 //     },
-//     revalidate: 10,
 //   };
-// };
+// }
+
+export const getStaticProps = async () => {
+  const response = await fetch("http://localhost:3000/api/meetup", {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+  const data = await response.json();
+  const meetups = data.meetups;
+  return {
+    props: {
+      meetups: meetups.map((meetup) => {
+        return {
+          title: meetup.title,
+          address: meetup.address,
+          image: meetup.image,
+          description: meetup.description,
+          id: meetup._id.toString(),
+        };
+      }),
+    },
+    revalidate: 1,
+  };
+};
 
 function HomePage(props) {
-  return <MeetupList meetups={DUMMY_MEETUPS} />;
+  return <MeetupList meetups={props.meetups} />;
 }
 
 export default HomePage;
